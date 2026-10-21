@@ -1,0 +1,22 @@
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: daynix-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: daynix
+      POSTGRES_USER: daynix_user
+      POSTGRES_PASSWORD: local_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - daynix_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U daynix_user -d daynix"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  daynix_postgres_data:

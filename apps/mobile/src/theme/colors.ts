@@ -1,0 +1,18 @@
+export const COLORS = {
+  Primary: '#6938EF',
+  PrimaryTint: '#EEE8FF',
+  PrimarySoft: '#DFD4FC',
+  Ink: '#272335',
+  Muted: '#817B91',
+  Background: '#F9F8FC',
+  Surface: '#FFFFFF',
+  Border: '#EAE6F1',
+  Danger: '#C05065',
+  DangerTint: '#FBEAEE',
+  Success: '#2E9B74',
+  SuccessTint: '#E8F5EF',
+  Warning: '#B56A28',
+  WarningTint: '#FFF0E4',
+BorderColor: '#FFFFFF2E',
+PrimaryLight: "#B8A2F6",
+} as const;
