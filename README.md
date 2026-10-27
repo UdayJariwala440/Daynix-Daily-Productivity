@@ -162,3 +162,4 @@ Learn more about the power of Turborepo:
 # Daynix-Daily-Productivity
 Daynix is a smart task manager to organize tasks, track progress, and boost daily productivity.
 781e5db8af62d371cf5284f6c1d81ecc81ab380d
+<!-- Expo/React Native, Node.js, and PostgreSQL -->
