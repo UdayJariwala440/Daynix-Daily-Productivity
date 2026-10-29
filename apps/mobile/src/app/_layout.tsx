@@ -1,40 +1,50 @@
+import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { useAppFonts } from "@/hooks/useAppFonts";
 import { SplashScreen, Stack } from "expo-router";
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
-export default function RootLayout() {
+SplashScreen.preventAutoHideAsync();
+
+function RootNavigator() {
   const { loaded, error } = useAppFonts();
+  const { status } = useAuth();
+
+  const ready = (loaded || !!error) && status !== "loading";
 
   useEffect(() => {
-    if (loaded || error) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded, error]);
+    if (ready) SplashScreen.hideAsync();
+  }, [ready]);
 
-  if (!loaded && !error) {
-    return null;
-  }
+  if (error) throw error;
+  if (!ready) return null;
 
-  if (error) {
-    throw error;
-  }
+  const isLoggedIn = status === "authenticated";
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-            }}
-          >
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Protected guard={!isLoggedIn}>
+              <Stack.Screen name="(auth)" />
+            </Stack.Protected>
+            <Stack.Protected guard={isLoggedIn}>
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="calender" />
+            </Stack.Protected>
           </Stack>
         </SafeAreaView>
       </SafeAreaProvider>
     </GestureHandlerRootView>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <RootNavigator />
+    </AuthProvider>
   );
 }

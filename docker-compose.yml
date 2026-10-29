@@ -18,5 +18,19 @@ services:
       timeout: 5s
       retries: 5
 
+  db_ui:
+    image: sosedoff/pgweb:0.16.2
+    container_name: daynix-db-ui
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8088:8081"
+    command:
+      - "--bind=0.0.0.0"
+      - "--listen=8081"
+      - "--url=postgresql://daynix_user:local_dev_password@db:5432/daynix?sslmode=disable"
+
 volumes:
   daynix_postgres_data:

@@ -8,6 +8,10 @@ export interface loginPayload {
   email: string;
 }
 
+export interface refreshPayload {
+  refreshToken: string;
+}
+
 export interface verifyOtpPayload {
   otp: string;
   email: string;
@@ -73,6 +77,15 @@ export interface User {
   updated_at: string;
 }
 
+
+export interface RefreshResponse {
+  success: boolean;
+  message: string;
+  accessToken: string;
+  refreshToken: string;
+  tokenType: "Bearer";
+  expiresIn: number;
+}
 export const signup = async (
   payload: signupPayload,
 ): Promise<signupResponse> => {
@@ -102,8 +115,15 @@ export const verifyOtp = async (
     API_ENDPOINTS.auth.verifyOtp,
     payload,
   );
-console.log("otp ====>",JSON.stringify(response.data));
-
+  return response.data;
+};
+export const refresh = async (
+  payload: refreshPayload,
+): Promise<RefreshResponse> => {
+  const response = await axiosInstance.post<RefreshResponse>(
+    API_ENDPOINTS.auth.refresh,
+    payload,
+  );
   return response.data;
 };
 

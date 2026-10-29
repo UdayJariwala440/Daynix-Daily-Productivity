@@ -8,4 +8,12 @@ export const IMAGES = {
   arrow_right: require('../assets/images/ic_arrow_right.png'),
   user: require('../assets/images/ic_user.png'),
   mail: require('../assets/images/ic_mail.png'),
+  search: require('../assets/images/ic_search.png'),
+  bell: require('../assets/images/ic_bell.png'),
+  clipboard: require('../assets/images/ic_clipboard_list.png'),
+  plus: require('../assets/images/ic_plus.png'),
+  calendar: require('../assets/images/ic_calendar_days.png'),
+  clock: require('../assets/images/ic_clock.png'),
+  check: require('../assets/images/ic_check.png'),
+  chevron_right: require('../assets/images/ic_chevron_right.png'),
 } as const;

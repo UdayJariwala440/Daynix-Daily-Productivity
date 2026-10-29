@@ -4,16 +4,26 @@ import { useState } from "react";
 import {
   Image,
   ImageSourcePropType,
+  ImageStyle,
+  StyleProp,
   Text,
   TextInput,
   TextInputProps,
+  TextStyle,
   View,
+  ViewStyle,
 } from "react-native";
 
 type InputProps = TextInputProps & {
   label?: string;
   icon?: ImageSourcePropType;
   error?: string;
+  containerStyle?: StyleProp<ViewStyle>;
+  inputContainerStyle?: StyleProp<ViewStyle>;
+  labelStyle?: StyleProp<TextStyle>;
+  inputStyle?: StyleProp<TextStyle>;
+  errorStyle?: StyleProp<TextStyle>;
+  iconStyle?: StyleProp<ImageStyle>;
 };
 
 const Input = ({
@@ -23,6 +33,14 @@ const Input = ({
   style,
   onFocus,
   onBlur,
+
+  containerStyle,
+  inputContainerStyle,
+  labelStyle,
+  inputStyle,
+  errorStyle,
+  iconStyle,
+
   ...textInputProps
 }: InputProps) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -34,37 +52,48 @@ const Input = ({
       : COLORS.Muted;
 
   return (
-    <View>
-      <Text
-        style={{
-          color: COLORS.Muted,
-          fontFamily: FONTS.semiBold,
-          fontSize: 14,
-        }}
-      >
-        {label}
-      </Text>
+    <View style={containerStyle}>
+      {!!label?.trim() && (
+        <Text
+          style={[
+            {
+              color: COLORS.Muted,
+              fontFamily: FONTS.semiBold,
+              fontSize: 14,
+            },
+            labelStyle,
+          ]}
+        >
+          {label}
+        </Text>
+      )}
 
       <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          marginTop: 7,
-          paddingHorizontal: 10,
-          borderWidth: 1,
-          borderColor: activeColor,
-          backgroundColor: COLORS.Surface,
-          borderRadius: 16,
-        }}
+        style={[
+          {
+            flexDirection: "row",
+            alignItems: "center",
+            marginTop: 7,
+            paddingHorizontal: 10,
+            borderWidth: 1,
+            borderColor: activeColor,
+            backgroundColor: COLORS.Surface,
+            borderRadius: 16,
+          },
+          inputContainerStyle,
+        ]}
       >
         {icon && (
           <Image
             source={icon}
-            style={{
-              height: 18,
-              width: 18,
-              tintColor: activeColor,
-            }}
+            style={[
+              {
+                height: 18,
+                width: 18,
+                tintColor: activeColor,
+              },
+              iconStyle,
+            ]}
             resizeMode="contain"
           />
         )}
@@ -90,18 +119,22 @@ const Input = ({
               marginLeft: icon ? 10 : 0,
             },
             style,
+            inputStyle,
           ]}
         />
       </View>
 
       {!!error && (
         <Text
-          style={{
-            color: COLORS.Danger,
-            fontFamily: FONTS.regular,
-            fontSize: 12,
-            marginTop: 5,
-          }}
+          style={[
+            {
+              color: COLORS.Danger,
+              fontFamily: FONTS.regular,
+              fontSize: 12,
+              marginTop: 5,
+            },
+            errorStyle,
+          ]}
         >
           {error}
         </Text>

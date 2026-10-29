@@ -20,12 +20,13 @@ export default function LoginScreen() {
     try {
       const response = await login({ email: textEmail });
       if (response.success) {
-          router.push({
-  pathname: "/(auth)/verifycode",
-  params: {
-    email: textEmail,
-  },
-});
+        setTextEmail('')
+        router.push({
+          pathname: "/(auth)/verifycode",
+          params: {
+            email: textEmail,
+          },
+        });
       }
     } catch (error) {
       console.log("Error ===>", JSON.stringify(error));

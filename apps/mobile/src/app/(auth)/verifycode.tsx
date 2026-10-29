@@ -1,8 +1,8 @@
 import { OtpInput } from "@/features";
+import { useAuth } from "@/context/AuthContext";
 import {
   getDeviceInfo,
   resend,
-  saveAuthTokens,
   verifyOtp,
 } from "@/features/auth/services";
 import {
@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import { Keyboard, TouchableWithoutFeedback, View } from "react-native";
 
 export default function VerifyCodeScreen() {
+  const { signIn } = useAuth();
   const [otp, setOtp] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -65,12 +66,11 @@ export default function VerifyCodeScreen() {
         device: getDeviceInfo(),
       });
 
-
-      if(response.success){
-  await saveAuthTokens(response.accessToken, response.refreshToken);
-      router.replace("/home");
+      if (response.success) {
+        setOtp("");
+        await signIn(response.accessToken, response.refreshToken);
+        router.replace("/(tabs)/home");
       }
-    
     } catch {
       setError("That code is invalid or has expired. Please try again.");
     } finally {

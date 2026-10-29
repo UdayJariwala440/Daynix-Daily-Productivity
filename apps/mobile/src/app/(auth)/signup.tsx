@@ -24,12 +24,12 @@ export default function SignupScreen() {
       if (response.success === true) {
         setTextEmail("");
         setTextFullname("");
-    router.push({
-  pathname: "/(auth)/verifycode",
-  params: {
-    email: textEmail,
-  },
-});
+        router.push({
+          pathname: "/(auth)/verifycode",
+          params: {
+            email: textEmail,
+          },
+        });
       }
     } catch (error) {
       console.log("Error ===>", JSON.stringify(error));

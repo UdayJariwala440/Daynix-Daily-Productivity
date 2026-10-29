@@ -1,11 +1,14 @@
-
 import { IMAGES } from "@/constants";
 import { COLORS, FONTS } from "@/theme";
 import {
   ActivityIndicator,
   Image,
+  ImageSourcePropType,
+  ImageStyle,
+  StyleProp,
   StyleSheet,
   Text,
+  TextStyle,
   TouchableOpacity,
   TouchableOpacityProps,
 } from "react-native";
@@ -14,6 +17,9 @@ type AppButtonProps = TouchableOpacityProps & {
   title: string;
   loading?: boolean;
   showIcon?: boolean;
+  icon?: ImageSourcePropType;
+  iconStyle?: StyleProp<ImageStyle>;
+  titleStyle?: StyleProp<TextStyle>;
 };
 
 const AppButton = ({
@@ -22,6 +28,9 @@ const AppButton = ({
   showIcon = true,
   disabled,
   style,
+  icon = IMAGES.arrow_right,
+  iconStyle,
+  titleStyle,
   ...props
 }: AppButtonProps) => {
   return (
@@ -36,14 +45,14 @@ const AppButton = ({
       ) : (
         showIcon && (
           <Image
-            source={IMAGES.arrow_right}
-            style={styles.icon}
+            source={icon}
+            style={[styles.icon, iconStyle]}
             resizeMode="contain"
           />
         )
       )}
 
-      <Text style={styles.title}>{title}</Text>
+      <Text style={[styles.title, titleStyle]}>{title}</Text>
     </TouchableOpacity>
   );
 };

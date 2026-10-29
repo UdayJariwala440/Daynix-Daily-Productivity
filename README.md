@@ -152,3 +152,11 @@ pnpm build
 - Use a strong, randomly generated `JWT_SECRET` in every deployed environment.
 - Local OTPs are printed by the API only outside production until an email provider is integrated.
 - Production deployments should restrict CORS to trusted origins and use encrypted database connections where required.
+
+<!-- testuser991@yopmail.com
+user this as testing for the local -->
+<!-- http://localhost:8088.
+
+
+for the live db
+ -->
