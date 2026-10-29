@@ -1,0 +1,1 @@
+export {API_ENDPOINTS,axiosInstance} from './api'

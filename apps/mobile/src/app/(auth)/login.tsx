@@ -1,4 +1,5 @@
 import { IMAGES } from "@/constants";
+import { login } from "@/features/auth/services";
 import {
   AppButton,
   AuthFooter,
@@ -14,6 +15,22 @@ import { Image, Keyboard, TouchableWithoutFeedback, View } from "react-native";
 export default function LoginScreen() {
   const [loading, setLoading] = useState<boolean>(false);
   const [textEmail, setTextEmail] = useState<string>("");
+
+  const onLogin = async () => {
+    try {
+      const response = await login({ email: textEmail });
+      if (response.success) {
+          router.push({
+  pathname: "/(auth)/verifycode",
+  params: {
+    email: textEmail,
+  },
+});
+      }
+    } catch (error) {
+      console.log("Error ===>", JSON.stringify(error));
+    }
+  };
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={{ flex: 1 }}>
@@ -29,7 +46,7 @@ export default function LoginScreen() {
             bottomTagline="Sign in to pick up where you left off."
           />
           <Input
-           label={"Email"}
+            label={"Email"}
             icon={IMAGES.mail}
             placeholder="xyz@eample.com"
             value={textEmail}
@@ -42,9 +59,11 @@ export default function LoginScreen() {
             title="Sign in"
             loading={loading}
             onPress={() => {
-              setLoading(true);
-              router.push("/(auth)/signup");
-              setLoading(false);
+              // setLoading(true);
+              // router.push("/(auth)/signup");
+              // setLoading(false);
+
+              onLogin();
             }}
           />
           <View style={{ flex: 1 }} />
@@ -52,7 +71,7 @@ export default function LoginScreen() {
             linkText="Create an account"
             message="New to Daynix?"
             onPress={() => {
-                 router.push("/(auth)/signup");
+              router.push("/(auth)/signup");
             }}
           />
         </ScreenContainer>

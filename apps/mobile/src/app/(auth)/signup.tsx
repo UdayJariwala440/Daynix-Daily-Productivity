@@ -1,4 +1,5 @@
 import { IMAGES } from "@/constants";
+import { signup } from "@/features/auth";
 import {
   AppButton,
   AuthFooter,
@@ -15,6 +16,27 @@ export default function SignupScreen() {
   const [loading, setLoading] = useState<boolean>(false);
   const [textEmail, setTextEmail] = useState<string>("");
   const [textFullname, setTextFullname] = useState<string>("");
+
+  const onSighUp = async () => {
+    try {
+      setLoading(true);
+      const response = await signup({ email: textEmail, name: textFullname });
+      if (response.success === true) {
+        setTextEmail("");
+        setTextFullname("");
+    router.push({
+  pathname: "/(auth)/verifycode",
+  params: {
+    email: textEmail,
+  },
+});
+      }
+    } catch (error) {
+      console.log("Error ===>", JSON.stringify(error));
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View style={{ flex: 1 }}>
@@ -50,9 +72,7 @@ export default function SignupScreen() {
             title="Create account"
             loading={loading}
             onPress={() => {
-              setLoading(true);
-              router.push("/(auth)/verifycode");
-              setLoading(false);
+              onSighUp();
             }}
           />
           <View style={{ flex: 1 }} />

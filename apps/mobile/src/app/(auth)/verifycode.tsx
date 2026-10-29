@@ -1,5 +1,11 @@
 import { OtpInput } from "@/features";
 import {
+  getDeviceInfo,
+  resend,
+  saveAuthTokens,
+  verifyOtp,
+} from "@/features/auth/services";
+import {
   AppButton,
   AuthFooter,
   AuthHeader,
@@ -7,13 +13,85 @@ import {
   ScreenContainer,
 } from "@/features/components";
 import { COLORS } from "@/theme";
-import { router } from "expo-router";
-import { useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
 import { Keyboard, TouchableWithoutFeedback, View } from "react-native";
 
 export default function VerifyCodeScreen() {
-  const [otp, setOtp] = useState("");
-  const [error, setError] = useState("");
+  const [otp, setOtp] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const { email = "" } = useLocalSearchParams<{ email: string }>();
+  const OTP_EXPIRY_SECONDS = 5 * 60;
+
+  const [timeLeft, setTimeLeft] = useState<number>(OTP_EXPIRY_SECONDS);
+  const [resendTime, setResendTime] = useState<number>(30);
+
+  useEffect(() => {
+    if (resendTime <= 0) return;
+    const timer = setInterval(() => {
+      setResendTime((prev) => Math.max(prev - 1, 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendTime]);
+
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => Math.max(prev - 1, 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [timeLeft]);
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    return `${String(minutes).padStart(2, "0")}:${String(
+      remainingSeconds,
+    ).padStart(2, "0")}`;
+  };
+
+  const onCodeSend = async () => {
+    if (otp.length !== 6 || loading) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await verifyOtp({
+        email,
+        otp,
+        device: getDeviceInfo(),
+      });
+
+
+      if(response.success){
+  await saveAuthTokens(response.accessToken, response.refreshToken);
+      router.replace("/home");
+      }
+    
+    } catch {
+      setError("That code is invalid or has expired. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resendOTP = async () => {
+    if (resendTime > 0) return;
+
+    try {
+      const response = await resend({ email });
+
+      if (response.success) {
+        setResendTime(30);
+        setTimeLeft(OTP_EXPIRY_SECONDS);
+      }
+    } catch {
+      setError("Unable to resend the code. Please try again.");
+    }
+  };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -24,9 +102,7 @@ export default function VerifyCodeScreen() {
           <AuthHeader
             tagline="VERIFY EMAIL"
             title={"Check your\ninbox."}
-            bottomTagline={
-              "We sent a 6-digit code to livia@daynix.app. It\nexpires in 10 minutes."
-            }
+            bottomTagline={`We sent a 6-digit code to ${email}. It\nexpires in 5 minutes.`}
           />
 
           <OtpInput
@@ -40,11 +116,13 @@ export default function VerifyCodeScreen() {
           />
           <View style={{ marginVertical: 20 }}>
             <AuthFooter
-              linkText="Resend in 0:42"
+              linkText={
+                resendTime > 0
+                  ? `Resend in ${formatTime(resendTime)}`
+                  : "Resend code"
+              }
               message="Didn’t get a code?"
-              onPress={() => {
-                router.push("/(auth)/signup");
-              }}
+              onPress={resendOTP}
             />
           </View>
 
@@ -55,9 +133,9 @@ export default function VerifyCodeScreen() {
                 otp.length !== 6 ? COLORS.PrimaryLight : COLORS.Primary,
             }}
             title="Verify code"
-            onPress={() => {
-             router.replace("/home");
-            }}
+            loading={loading}
+            disabled={otp.length !== 6 || timeLeft === 0}
+            onPress={onCodeSend}
           />
         </ScreenContainer>
       </View>

@@ -9,6 +9,7 @@ export default function BottomLayout() {
       }}
     >
       <Stack.Screen name="home" />
+      <Stack.Screen name="sessions" />
     </Stack>
   );
 }

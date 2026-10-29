@@ -1,14 +1,36 @@
 import express from "express";
+import type { Request, Response, NextFunction } from "express";
 import helmet from "helmet";
 import cors from "cors";
 import { pool } from "./config/database.js";
 import authRoutes from "./features/auth/auth.routes.js";
+
 const app = express();
+
+export function requestLogger(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const startTime = Date.now();
+
+  res.on("finish", () => {
+    const duration = Date.now() - startTime;
+
+    console.log(
+      `[API] ${req.method} ${req.originalUrl} → ${res.statusCode} (${duration}ms)`,
+    );
+  });
+
+  next();
+}
 
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use(requestLogger);
 
+// API welcome endpoint
 app.get("/", (_req, res) => {
   res.json({
     success: true,
@@ -16,7 +38,7 @@ app.get("/", (_req, res) => {
   });
 });
 
-
+// Health check endpoint
 app.get("/health", async (_req, res) => {
   try {
     await pool.query("SELECT NOW()");
@@ -37,7 +59,7 @@ app.get("/health", async (_req, res) => {
   }
 });
 
-
+// Authentication routes
 app.use("/api/auth", authRoutes);
 
 export default app;

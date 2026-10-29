@@ -1,6 +1,12 @@
 import { COLORS, FONTS } from "@/theme";
 import { useRef, useState } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  type TextInputInstance,
+} from "react-native";
 
 type OtpInputProps = {
   length?: number;
@@ -15,7 +21,7 @@ export default function OtpInput({
   onChange,
   error,
 }: OtpInputProps) {
-  const inputRefs = useRef<Array<TextInput | null>>([]);
+  const inputRefs = useRef<(TextInputInstance | null)[]>([]);
   const [focusedIndex, setFocusedIndex] = useState(0);
 
   const handleChange = (text: string, index: number) => {
