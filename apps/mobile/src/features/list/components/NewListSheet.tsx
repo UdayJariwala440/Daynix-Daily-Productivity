@@ -18,14 +18,21 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ColorPicker, { LIST_COLORS } from "./ColorPicker";
 
-const PURPLE = LIST_COLORS[0].value;
+const PURPLE = LIST_COLORS[0].subColor;
 const MAX_LENGTH = 30;
 const SCREEN_H = Dimensions.get("window").height;
 
 interface NewListSheetProps {
   visible: boolean;
   onClose: () => void;
-  onCreate: (list: { name: string; color: string }) => void;
+  onCreate: (list: { name: string; color: string; subColor: string }) => void;
+  onUpdate?: (list: { name: string; color: string; subColor: string }) => void;
+  initialData?: {
+    id?: string;
+    name: string;
+    color: string;
+    sub_color: string;
+  } | null;
   existingNames?: string[];
 }
 
@@ -33,20 +40,32 @@ export default function NewListSheet({
   visible,
   onClose,
   onCreate,
+  onUpdate,
+  initialData = null,
   existingNames = [],
 }: NewListSheetProps) {
   const insets = useSafeAreaInsets();
-  const [mounted, setMounted] = useState(visible);
-  const [name, setName] = useState("");
+  const [name, setName] = useState<string>("");
   const [color, setColor] = useState<string>(PURPLE);
-  const [focused, setFocused] = useState(false);
-
+  const [focused, setFocused] = useState<boolean>(false);
+  const [subColor, setSubColor] = useState<string>(PURPLE);
+  const [mounted, setMounted] = useState<boolean>(visible);
   const translateY = useRef(new Animated.Value(SCREEN_H)).current;
   const backdrop = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
       setMounted(true);
+      if (initialData) {
+        setName(initialData.name);
+        setColor(initialData.color);
+        setSubColor(initialData.sub_color);
+      } else {
+        setName("");
+        setColor(PURPLE);
+        setSubColor(PURPLE);
+      }
+
       Animated.parallel([
         Animated.timing(backdrop, {
           toValue: 1,
@@ -62,6 +81,7 @@ export default function NewListSheet({
       ]).start();
     } else if (mounted) {
       Keyboard.dismiss();
+
       Animated.parallel([
         Animated.timing(backdrop, {
           toValue: 0,
@@ -77,9 +97,11 @@ export default function NewListSheet({
         setMounted(false);
         setName("");
         setColor(PURPLE);
+        setSubColor(PURPLE);
+        setFocused(false);
       });
     }
-  }, [visible]);
+  }, [visible, initialData]);
 
   const pan = useMemo(
     () =>
@@ -102,16 +124,29 @@ export default function NewListSheet({
 
   const trimmed = name.trim();
   const duplicate = existingNames.some(
-    (n) => n.toLowerCase() === trimmed.toLowerCase(),
+    (existingName) =>
+      existingName.toLowerCase() === trimmed.toLowerCase() &&
+      existingName.toLowerCase() !== initialData?.name.trim().toLowerCase(),
   );
   const canCreate = trimmed.length > 0 && !duplicate;
 
   const submit = () => {
     if (!canCreate) return;
-    onCreate({ name: trimmed, color });
+
+    const payload = {
+      name: trimmed,
+      color,
+      subColor,
+    };
+
+    if (initialData) {
+      onUpdate?.(payload);
+    } else {
+      onCreate(payload);
+    }
+
     onClose();
   };
-
   return (
     <Modal
       visible={mounted}
@@ -131,7 +166,6 @@ export default function NewListSheet({
             accessibilityLabel="Close"
           />
         </Animated.View>
-
         <Animated.View
           style={[
             styles.sheet,
@@ -144,10 +178,10 @@ export default function NewListSheet({
           <View {...pan.panHandlers} style={styles.handleArea}>
             <View style={styles.handle} />
           </View>
-
-          <Text style={styles.title}>New list</Text>
-
-          <Text style={styles.label}>List name</Text>
+          <Text style={styles.title}>
+            {initialData ? "Update list" : "New list"}
+          </Text>
+          <Text style={styles.label}>{"List name"}</Text>
           <TextInput
             value={name}
             onChangeText={setName}
@@ -168,13 +202,17 @@ export default function NewListSheet({
           />
           {duplicate && (
             <Text style={styles.error}>
-              A list with this name already exists.
+              {" A list with this name already exists."}
             </Text>
           )}
-
-          <Text style={[styles.label, { marginTop: 20 }]}>Color</Text>
-          <ColorPicker value={color} onChange={setColor} />
-
+          <Text style={[styles.label, { marginTop: 20 }]}>{"Color"}</Text>
+          <ColorPicker
+            subColor={subColor}
+            onChange={(color: string, subColor: string) => {
+              setColor(color);
+              setSubColor(subColor);
+            }}
+          />
           <TouchableOpacity
             onPress={submit}
             disabled={!canCreate}
@@ -183,11 +221,13 @@ export default function NewListSheet({
             accessibilityState={{ disabled: !canCreate }}
             style={[
               styles.cta,
-              { backgroundColor: color },
+              { backgroundColor: subColor },
               !canCreate && styles.ctaDisabled,
             ]}
           >
-            <Text style={styles.ctaText}>Create list</Text>
+            <Text style={[styles.ctaText, { color: color }]}>
+              {"Create list"}
+            </Text>
           </TouchableOpacity>
         </Animated.View>
       </KeyboardAvoidingView>
@@ -198,12 +238,10 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-
   backdrop: {
     ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(20,16,40,0.45)",
   },
-
   sheet: {
     position: "absolute",
     left: 0,
@@ -214,33 +252,28 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     paddingHorizontal: 20,
   },
-
   handleArea: {
     alignItems: "center",
     paddingVertical: 12,
   },
-
   handle: {
     width: 36,
     height: 4,
     borderRadius: 2,
     backgroundColor: COLORS.PrimarySoft,
   },
-
   title: {
     fontFamily: FONTS.bold,
     fontSize: 20,
     color: COLORS.Ink,
     marginBottom: 16,
   },
-
   label: {
     fontFamily: FONTS.medium,
     fontSize: 13,
     color: COLORS.Ink,
     marginBottom: 8,
   },
-
   input: {
     height: 52,
     borderRadius: 14,
@@ -251,22 +284,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.Ink,
   },
-
   inputFocused: {
     borderColor: COLORS.Primary,
   },
-
   inputError: {
     borderColor: COLORS.Danger,
   },
-
   error: {
     fontFamily: FONTS.medium,
     fontSize: 12,
     color: COLORS.Danger,
     marginTop: 6,
   },
-
   cta: {
     height: 54,
     borderRadius: 16,
@@ -274,11 +303,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 20,
   },
-
   ctaDisabled: {
     opacity: 0.4,
   },
-
   ctaText: {
     fontFamily: FONTS.bold,
     fontSize: 16,

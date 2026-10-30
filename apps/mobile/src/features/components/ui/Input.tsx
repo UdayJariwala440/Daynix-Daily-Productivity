@@ -16,7 +16,7 @@ import {
 
 type InputProps = TextInputProps & {
   label?: string;
-  icon?: ImageSourcePropType;
+ icon?: ImageSourcePropType | null;
   error?: string;
   containerStyle?: StyleProp<ViewStyle>;
   inputContainerStyle?: StyleProp<ViewStyle>;
@@ -115,8 +115,9 @@ const Input = ({
               fontFamily: FONTS.regular,
               color: COLORS.Ink,
               fontSize: 14,
-              paddingVertical: 12,
               marginLeft: icon ? 10 : 0,
+              height:48,
+              paddingVertical:0
             },
             style,
             inputStyle,

@@ -10,7 +10,7 @@ export default function Task() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   return (
     <ScreenContainer>
-    <Header title="Task" onActionPress={() =>{
+    <Header title="Task" onRightPress={() =>{
       router.push("/calender")
     }}/>
       <Input

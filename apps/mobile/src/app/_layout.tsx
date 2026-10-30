@@ -33,6 +33,7 @@ function RootNavigator() {
             <Stack.Protected guard={isLoggedIn}>
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="calender" />
+              <Stack.Screen name="newtask" />
             </Stack.Protected>
           </Stack>
         </SafeAreaView>

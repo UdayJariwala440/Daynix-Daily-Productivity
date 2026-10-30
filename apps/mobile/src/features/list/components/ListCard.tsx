@@ -32,6 +32,7 @@ interface ListCardProps {
   iconStyle?: StyleProp<ImageStyle>;
 
   onPress?: TouchableOpacityProps["onPress"];
+  onPressList?: TouchableOpacityProps["onPress"];
 }
 
 export default function ListCard({
@@ -48,6 +49,7 @@ export default function ListCard({
   subtitleStyle,
   iconStyle,
   onPress,
+  onPressList
 }: ListCardProps) {
   return (
     <TouchableOpacity
@@ -57,12 +59,13 @@ export default function ListCard({
       accessibilityRole="button"
       accessibilityLabel={`${title}, ${subtitle}`}
     >
-      <View
+      <TouchableOpacity
         style={[
           styles.avatar,
           { backgroundColor: avatarColor },
           avatarStyle,
         ]}
+        onPress={onPressList}
       >
         <Text
           style={[
@@ -73,7 +76,7 @@ export default function ListCard({
         >
           {initial}
         </Text>
-      </View>
+      </TouchableOpacity>
 
       <View style={styles.textContainer}>
         <Text style={[styles.title, titleStyle]} numberOfLines={1}>

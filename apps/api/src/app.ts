@@ -4,6 +4,7 @@ import helmet from "helmet";
 import cors from "cors";
 import { pool } from "./config/database.js";
 import authRoutes from "./features/auth/auth.routes.js";
+import listRoutes from "./features/lists/list.routes.js";
 
 const app = express();
 
@@ -61,5 +62,6 @@ app.get("/health", async (_req, res) => {
 
 // Authentication routes
 app.use("/api/auth", authRoutes);
+app.use("/api/lists", listRoutes);
 
 export default app;

@@ -9,4 +9,10 @@ export const API_ENDPOINTS = {
     otherSessions: "/auth/sessions/others",
     session: (sessionId: string) => `/auth/sessions/${sessionId}`,
   },
+  list: {
+    listAll: '/lists',
+    listById: '/lists/',
+    createList: '/lists',
+    updateList: '/lists'
+  }
 } as const;

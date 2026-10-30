@@ -8,6 +8,7 @@ import {
 
 import { COLORS, FONTS } from "@/theme";
 import { IMAGES } from "@/constants";
+import { router } from "expo-router";
 
 export default function HomeScreen() {
   return (
@@ -74,17 +75,15 @@ export default function HomeScreen() {
         primaryTitle="Add a task"
         secondaryTitle="New project"
         primaryIcon={IMAGES.plus}
-        showPrimaryIcon
-        onPrimaryPress={() => console.log("Add task pressed")}
+        onPrimaryPress={() => {
+           router.push("/newtask")
+        }}
         onSecondaryPress={() => console.log("New project pressed")}
         containerStyle={{
           marginTop: 4,
         }}
         primaryButtonStyle={{
           backgroundColor: COLORS.Primary,
-        }}
-        secondaryButtonStyle={{
-          borderColor: COLORS.Border,
         }}
       />
     </ScreenContainer>

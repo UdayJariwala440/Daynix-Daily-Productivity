@@ -16,4 +16,7 @@ export const IMAGES = {
   clock: require('../assets/images/ic_clock.png'),
   check: require('../assets/images/ic_check.png'),
   chevron_right: require('../assets/images/ic_chevron_right.png'),
+  close: require('../assets/images/ic_close.png'),
+  chevron: require('../assets/images/ic_chevron_down.png'),
+  flag: require('../assets/images/ic_flag.png'),
 } as const;

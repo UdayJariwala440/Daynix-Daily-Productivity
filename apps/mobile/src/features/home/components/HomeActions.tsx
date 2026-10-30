@@ -56,13 +56,13 @@ export default function HomeActions({
         iconStyle={primaryIconStyle}
       />
 
-      <AppButton
+      {/* <AppButton
         title={secondaryTitle}
         onPress={onSecondaryPress}
         showIcon={false}
         style={[ secondaryButtonStyle]}
         titleStyle={secondaryTitleStyle}
-      />
+      /> */}
     </View>
   );
 }

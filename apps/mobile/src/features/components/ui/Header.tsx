@@ -15,43 +15,69 @@ import {
 
 interface HeaderProps {
   title?: string;
-  icon?: ImageSourcePropType;
-  onActionPress: () => void;
-  actionLabel?: string;
+  leftIcon?: ImageSourcePropType;
+  rightIcon?: ImageSourcePropType;
+  onLeftPress?: () => void;
+  onRightPress?: () => void;
+  leftActionLabel?: string;
+  rightActionLabel?: string;
 
   containerStyle?: StyleProp<ViewStyle>;
   titleStyle?: StyleProp<TextStyle>;
   buttonStyle?: StyleProp<ViewStyle>;
-  iconStyle?: StyleProp<ImageStyle>;
+  leftIconStyle?: StyleProp<ImageStyle>;
+  rightIconStyle?: StyleProp<ImageStyle>;
 }
 
 export default function Header({
   title = "My tasks",
-  icon = IMAGES.calendar,
-  onActionPress,
-  actionLabel = "Open calendar",
+  leftIcon,
+  rightIcon = IMAGES.calendar,
+  onLeftPress,
+  onRightPress,
+  leftActionLabel = "Left action",
+  rightActionLabel = "Open calendar",
   containerStyle,
   titleStyle,
   buttonStyle,
-  iconStyle,
+  leftIconStyle,
+  rightIconStyle,
 }: HeaderProps) {
   return (
     <View style={[styles.container, containerStyle]}>
+      {leftIcon && (
+      <TouchableOpacity
+        onPress={onLeftPress}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={leftActionLabel}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        style={[styles.button, buttonStyle]}
+      >
+        {leftIcon && (
+          <Image
+            source={leftIcon}
+            style={[styles.icon, leftIconStyle]}
+            resizeMode="contain"
+            accessible={false}
+          />
+        )}
+      </TouchableOpacity>
+      )}
       <Text style={[styles.title, titleStyle]} numberOfLines={1}>
         {title}
       </Text>
-
       <TouchableOpacity
-        onPress={onActionPress}
+        onPress={onRightPress}
         activeOpacity={0.7}
         accessibilityRole="button"
-        accessibilityLabel={actionLabel}
+        accessibilityLabel={rightActionLabel}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         style={[styles.button, buttonStyle]}
       >
         <Image
-          source={icon}
-          style={[styles.icon, iconStyle]}
+          source={rightIcon}
+          style={[styles.icon, rightIconStyle]}
           resizeMode="contain"
           accessible={false}
         />
