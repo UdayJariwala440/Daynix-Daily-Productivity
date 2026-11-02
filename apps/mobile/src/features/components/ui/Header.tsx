@@ -16,12 +16,11 @@ import {
 interface HeaderProps {
   title?: string;
   leftIcon?: ImageSourcePropType;
-  rightIcon?: ImageSourcePropType;
+  rightIcon?: ImageSourcePropType | null;
   onLeftPress?: () => void;
   onRightPress?: () => void;
   leftActionLabel?: string;
   rightActionLabel?: string;
-
   containerStyle?: StyleProp<ViewStyle>;
   titleStyle?: StyleProp<TextStyle>;
   buttonStyle?: StyleProp<ViewStyle>;
@@ -46,42 +45,46 @@ export default function Header({
   return (
     <View style={[styles.container, containerStyle]}>
       {leftIcon && (
-      <TouchableOpacity
-        onPress={onLeftPress}
-        activeOpacity={0.7}
-        accessibilityRole="button"
-        accessibilityLabel={leftActionLabel}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        style={[styles.button, buttonStyle]}
-      >
-        {leftIcon && (
-          <Image
-            source={leftIcon}
-            style={[styles.icon, leftIconStyle]}
-            resizeMode="contain"
-            accessible={false}
-          />
-        )}
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={onLeftPress}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={leftActionLabel}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          style={[styles.button, buttonStyle]}
+        >
+          {leftIcon && (
+            <Image
+              source={leftIcon}
+              style={[styles.icon, leftIconStyle]}
+              resizeMode="contain"
+              accessible={false}
+            />
+          )}
+        </TouchableOpacity>
       )}
       <Text style={[styles.title, titleStyle]} numberOfLines={1}>
         {title}
       </Text>
-      <TouchableOpacity
-        onPress={onRightPress}
-        activeOpacity={0.7}
-        accessibilityRole="button"
-        accessibilityLabel={rightActionLabel}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        style={[styles.button, buttonStyle]}
-      >
-        <Image
-          source={rightIcon}
-          style={[styles.icon, rightIconStyle]}
-          resizeMode="contain"
-          accessible={false}
-        />
-      </TouchableOpacity>
+      {rightIcon && (
+        <TouchableOpacity
+          onPress={onRightPress}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={rightActionLabel}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          style={[styles.button, buttonStyle]}
+        >
+          {rightIcon && (
+            <Image
+              source={rightIcon}
+              style={[styles.icon, rightIconStyle]}
+              resizeMode="contain"
+              accessible={false}
+            />
+          )}
+        </TouchableOpacity>
+      )}
     </View>
   );
 }

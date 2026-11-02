@@ -13,11 +13,14 @@ const reminderSchema = z.enum([
 
 const prioritySchema = z.enum(["low", "medium", "high"]);
 
-const taskStatusSchema = z.enum([
+export const taskStatusSchema = z.enum([
   "pending",
   "in_progress",
   "paused",
+  "completed",
 ]);
+
+export type TaskStatus = z.infer<typeof taskStatusSchema>;
 
 export const saveTaskSchema = z
   .object({
@@ -59,4 +62,13 @@ export const saveTaskSchema = z
   })
   .strict();
 
+export const updateTaskStatusSchema = z
+  .object({
+    status: z.enum(["pending", "completed"], {
+      message: "Status must be either pending or completed.",
+    }),
+  })
+  .strict();
+
 export type SaveTaskInput = z.infer<typeof saveTaskSchema>;
+export type UpdateTaskStatusInput = z.infer<typeof updateTaskStatusSchema>;

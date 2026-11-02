@@ -1,1 +1,1 @@
-export {createUpdateTask,listAllTask,TaskData} from './taskService'
+export {createUpdateTask,listAllTask,TaskData,updateTaskStatus,deleteTask} from './taskService'

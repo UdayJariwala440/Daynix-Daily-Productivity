@@ -1,38 +1,25 @@
 import { pool } from "../../config/database.js";
-import type { SaveTaskInput } from "./task.validation.js";
+import type { SaveTaskInput, TaskStatus } from "./task.validation.js";
+
+const TASK_COLUMNS = `
+  id, user_id, list_id, name, description, start_date, start_time,
+  priority, reminder, status, is_completed, created_at, updated_at
+`;
 
 export async function saveTask(userId: string, input: SaveTaskInput) {
   if (!input.id) {
+    const status = input.status ?? "pending";
+
     const result = await pool.query(
       `INSERT INTO tasks (
-        user_id,
-        list_id,
-        name,
-        description,
-        start_date,
-        start_time,
-        priority,
-        reminder,
-        status
+        user_id, list_id, name, description, start_date, start_time,
+        priority, reminder, status, is_completed
       )
       SELECT
-        $1, l.id, $3, $4, $5, $6, $7, $8, $9
+        $1, l.id, $3, $4, $5, $6, $7, $8, $9, $10::boolean
       FROM task_lists l
       WHERE l.id = $2 AND l.user_id = $1
-      RETURNING
-        id,
-        user_id,
-        list_id,
-        name,
-        description,
-        start_date,
-        start_time,
-        priority,
-        reminder,
-        status,
-        is_completed,
-        created_at,
-        updated_at`,
+      RETURNING ${TASK_COLUMNS}`,
       [
         userId,
         input.list_id,
@@ -42,7 +29,8 @@ export async function saveTask(userId: string, input: SaveTaskInput) {
         input.start_time ?? null,
         input.priority ?? "medium",
         input.reminder ?? "none",
-        input.status ?? "pending",
+        status,
+        status === "completed",
       ],
     );
 
@@ -95,6 +83,8 @@ export async function saveTask(userId: string, input: SaveTaskInput) {
   if (input.status !== undefined) {
     fields.push(`status = $${index++}`);
     values.push(input.status);
+    fields.push(`is_completed = $${index++}`);
+    values.push(input.status === "completed");
   }
 
   if (fields.length === 0) {
@@ -109,34 +99,20 @@ export async function saveTask(userId: string, input: SaveTaskInput) {
      WHERE t.id = $1
        AND t.user_id = $2
        AND EXISTS (
-         SELECT 1
-         FROM task_lists l
-         WHERE l.id = t.list_id
-           AND l.user_id = t.user_id
+         SELECT 1 FROM task_lists l
+         WHERE l.id = t.list_id AND l.user_id = t.user_id
        )
        AND (
          $${index}::uuid IS NULL
          OR EXISTS (
-           SELECT 1
-           FROM task_lists l
-           WHERE l.id = $${index}::uuid
-             AND l.user_id = $2
+           SELECT 1 FROM task_lists l
+           WHERE l.id = $${index}::uuid AND l.user_id = $2
          )
        )
      RETURNING
-       t.id,
-       t.user_id,
-       t.list_id,
-       t.name,
-       t.description,
-       t.start_date,
-       t.start_time,
-       t.priority,
-       t.reminder,
-       t.status,
-       t.is_completed,
-       t.created_at,
-       t.updated_at`,
+       t.id, t.user_id, t.list_id, t.name, t.description, t.start_date,
+       t.start_time, t.priority, t.reminder, t.status, t.is_completed,
+       t.created_at, t.updated_at`,
     [...values, input.list_id ?? null],
   );
 
@@ -149,19 +125,7 @@ export async function saveTask(userId: string, input: SaveTaskInput) {
 
 export async function findTaskById(userId: string, taskId: string) {
   const result = await pool.query(
-    `SELECT
-       id,
-       list_id,
-       name,
-       description,
-       start_date,
-       start_time,
-       priority,
-       reminder,
-       status,
-       is_completed,
-       created_at,
-       updated_at
+    `SELECT ${TASK_COLUMNS}
      FROM tasks
      WHERE id = $1 AND user_id = $2
      LIMIT 1`,
@@ -170,7 +134,6 @@ export async function findTaskById(userId: string, taskId: string) {
 
   return result.rows[0] ?? null;
 }
-
 
 export async function deleteTask(userId: string, taskId: string) {
   const result = await pool.query(
@@ -213,23 +176,12 @@ export async function findTasksByUserId(
 
   const result = await pool.query(
     `SELECT
-       t.id,
-       t.list_id,
-       l.name AS list_name,
-       t.name,
-       t.description,
-       t.start_date,
-       t.start_time,
-       t.priority,
-       t.reminder,
-       t.status,
-       t.is_completed,
-       t.created_at,
-       t.updated_at
+       t.id, t.list_id, l.name AS list_name, t.name, t.description,
+       t.start_date, t.start_time, t.priority, t.reminder, t.status,
+       t.is_completed, t.created_at, t.updated_at
      FROM tasks t
      INNER JOIN task_lists l
-       ON l.id = t.list_id
-       AND l.user_id = t.user_id
+       ON l.id = t.list_id AND l.user_id = t.user_id
      WHERE ${conditions.join(" AND ")}
      ORDER BY
        t.start_date ASC NULLS LAST,
@@ -239,4 +191,29 @@ export async function findTasksByUserId(
   );
 
   return result.rows;
+}
+
+export async function updateTaskStatus(
+  userId: string,
+  taskId: string,
+  status: TaskStatus,
+) {
+  if (typeof status !== "string") {
+    throw new TypeError(
+      `updateTaskStatus expected a string status, got ${typeof status}`,
+    );
+  }
+
+  const result = await pool.query(
+    `UPDATE tasks
+     SET status = $1,
+         is_completed = $2,
+         updated_at = NOW()
+     WHERE id = $3
+       AND user_id = $4
+     RETURNING id, status, is_completed, updated_at`,
+    [status, status === "completed", taskId, userId],
+  );
+
+  return result.rows[0] ?? null;
 }

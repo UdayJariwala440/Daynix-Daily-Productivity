@@ -1,16 +1,31 @@
 import type { Request, Response, NextFunction } from "express";
-import { saveTaskSchema } from "./task.validation.js";
+import { z } from "zod";
+import { saveTaskSchema, updateTaskStatusSchema } from "./task.validation.js";
 import {
   saveTask,
   getTasks,
   getTaskById,
   deleteTask,
+  updateTaskStatus,
 } from "./task.service.js";
-import z from "zod";
 
 function getUserId(req: Request): string | null {
   const user = (req as Request & { user?: { id?: string } }).user;
   return user?.id ?? null;
+}
+
+function unauthorized(res: Response) {
+  return res.status(401).json({
+    success: false,
+    message: "Authentication required.",
+  });
+}
+
+function formatZodErrors(error: z.ZodError) {
+  return error.issues.map((issue) => ({
+    field: issue.path.join("."),
+    message: issue.message,
+  }));
 }
 
 export async function saveTaskController(
@@ -19,13 +34,7 @@ export async function saveTaskController(
   next: NextFunction,
 ) {
   const userId = getUserId(req);
-
-  if (!userId) {
-    return res.status(401).json({
-      success: false,
-      message: "Authentication required.",
-    });
-  }
+  if (!userId) return unauthorized(res);
 
   const parsed = saveTaskSchema.safeParse(req.body);
 
@@ -33,10 +42,7 @@ export async function saveTaskController(
     return res.status(400).json({
       success: false,
       message: "Invalid task data.",
-      errors: parsed.error.issues.map((issue) => ({
-        field: issue.path.join("."),
-        message: issue.message,
-      })),
+      errors: formatZodErrors(parsed.error),
     });
   }
 
@@ -75,65 +81,54 @@ export async function saveTaskController(
   }
 }
 
+const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
 const taskDateFiltersSchema = z
   .object({
-    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-    start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-    end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    date: dateString.optional(),
+    start_date: dateString.optional(),
+    end_date: dateString.optional(),
   })
   .strict()
   .refine(
-    (filters) => !(filters.date && (filters.start_date || filters.end_date)),
-    {
-      message: "Use either date or a date range, not both.",
-    },
+    (f) => !(f.date && (f.start_date || f.end_date)),
+    { message: "Use either date or a date range, not both." },
   )
   .refine(
-    (filters) =>
-      !filters.start_date ||
-      !filters.end_date ||
-      filters.start_date <= filters.end_date,
-    {
-      message: "start_date must be before or equal to end_date.",
-    },
+    (f) => !f.start_date || !f.end_date || f.start_date <= f.end_date,
+    { message: "start_date must be before or equal to end_date." },
   );
 
 export async function getTasksController(
   req: Request,
   res: Response,
-): Promise<void> {
+  next: NextFunction,
+) {
+  const userId = getUserId(req);
+  if (!userId) return unauthorized(res);
+
+  const parsedFilters = taskDateFiltersSchema.safeParse(req.query);
+
+  if (!parsedFilters.success) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid date filters.",
+      errors: formatZodErrors(parsedFilters.error),
+    });
+  }
+
   try {
-    const parsedFilters = taskDateFiltersSchema.safeParse(req.query);
-
-    if (!parsedFilters.success) {
-      res.status(400).json({
-        success: false,
-        message: "Invalid date filters.",
-        errors: parsedFilters.error.issues.map((issue) => ({
-          field: issue.path.join("."),
-          message: issue.message,
-        })),
-      });
-      return;
-    }
-
-    const userId = getUserId(req);
     const result = await getTasks(userId, parsedFilters.data);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Tasks fetched successfully.",
       ...result,
     });
   } catch (error) {
-      console.error("Get tasks error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch tasks.",
-    });
+    return next(error);
   }
 }
-
 
 export async function getTaskByIdController(
   req: Request,
@@ -141,13 +136,7 @@ export async function getTaskByIdController(
   next: NextFunction,
 ) {
   const userId = getUserId(req);
-
-  if (!userId) {
-    return res.status(401).json({
-      success: false,
-      message: "Authentication required.",
-    });
-  }
+  if (!userId) return unauthorized(res);
 
   const taskId = req.params.id;
 
@@ -161,10 +150,7 @@ export async function getTaskByIdController(
   try {
     const result = await getTaskById(userId, taskId);
 
-    return res.status(200).json({
-      success: true,
-      ...result,
-    });
+    return res.status(200).json({ success: true, ...result });
   } catch (error) {
     if (error instanceof Error && error.message === "TASK_NOT_FOUND") {
       return res.status(404).json({
@@ -183,13 +169,7 @@ export async function deleteTaskController(
   next: NextFunction,
 ) {
   const userId = getUserId(req);
-
-  if (!userId) {
-    return res.status(401).json({
-      success: false,
-      message: "Authentication required.",
-    });
-  }
+  if (!userId) return unauthorized(res);
 
   const taskId = req.params.id;
 
@@ -203,10 +183,7 @@ export async function deleteTaskController(
   try {
     const result = await deleteTask(userId, taskId);
 
-    return res.status(200).json({
-      success: true,
-      ...result,
-    });
+    return res.status(200).json({ success: true, ...result });
   } catch (error) {
     if (error instanceof Error && error.message === "TASK_NOT_FOUND") {
       return res.status(404).json({
@@ -215,6 +192,53 @@ export async function deleteTaskController(
       });
     }
 
+    return next(error);
+  }
+}
+
+export async function updateTaskStatusController(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const userId = getUserId(req);
+  if (!userId) return unauthorized(res);
+
+  const taskId = req.params.id;
+
+  if (
+    typeof taskId !== "string" ||
+    !z.string().uuid().safeParse(taskId).success
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid task ID.",
+    });
+  }
+
+  const parsed = updateTaskStatusSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid task status.",
+      errors: formatZodErrors(parsed.error),
+    });
+  }
+
+  try {
+    const result = await updateTaskStatus(userId, taskId, parsed.data);
+
+    return res.status(200).json({ success: true, ...result });
+  } catch (error) {
+    if (error instanceof Error && error.message === "TASK_NOT_FOUND") {
+      return res.status(404).json({
+        success: false,
+        message: "Task not found.",
+      });
+    }
+
+    console.error("updateTaskStatus error:", error);
     return next(error);
   }
 }

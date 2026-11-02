@@ -18,6 +18,7 @@ export const API_ENDPOINTS = {
     createupdateTask: '/tasks/create-update',
     listAllTask: '/tasks/list',
     singleTask: '/tasks/',
-    deleteTask: '/tasks/'
+    deleteTask: '/tasks/',
+    status:'/tasks/'
   }
 } as const;

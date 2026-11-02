@@ -2,26 +2,22 @@ import {
   saveTask as saveTaskRepository,
   findTasksByUserId,
   findTaskById,
-    deleteTask as deleteTaskRepository,
-    TaskDateFilters,
+  deleteTask as deleteTaskRepository,
+  updateTaskStatus as updateTaskStatusRepository,
 } from "./task.repository.js";
 
-import type { SaveTaskInput } from "./task.validation.js";
+import type { TaskDateFilters } from "./task.repository.js";
+import type {
+  SaveTaskInput,
+  UpdateTaskStatusInput,
+} from "./task.validation.js";
 
 export async function saveTask(userId: string, input: SaveTaskInput) {
   const result = await saveTaskRepository(userId, input);
 
-  if (result.operation === "list_not_found") {
-    throw new Error("LIST_NOT_FOUND");
-  }
-
-  if (result.operation === "not_found") {
-    throw new Error("TASK_NOT_FOUND");
-  }
-
-  if (result.operation === "no_changes") {
-    throw new Error("NO_TASK_CHANGES");
-  }
+  if (result.operation === "list_not_found") throw new Error("LIST_NOT_FOUND");
+  if (result.operation === "not_found") throw new Error("TASK_NOT_FOUND");
+  if (result.operation === "no_changes") throw new Error("NO_TASK_CHANGES");
 
   return {
     message:
@@ -53,36 +49,45 @@ export async function getTasks(
 ) {
   const tasks = await findTasksByUserId(userId, filters);
 
-  const formattedTasks = tasks.map((task) => ({
-    ...task,
-    reminder_name: getReminderName(task.reminder),
-  }));
-
   return {
-    data: formattedTasks,
+    data: tasks.map((task) => ({
+      ...task,
+      reminder_name: getReminderName(task.reminder),
+    })),
   };
 }
 
 export async function getTaskById(userId: string, taskId: string) {
   const task = await findTaskById(userId, taskId);
 
-  if (!task) {
-    throw new Error("TASK_NOT_FOUND");
-  }
+  if (!task) throw new Error("TASK_NOT_FOUND");
 
-  return {
-    data: task,
-  };
+  return { data: task };
 }
 
 export async function deleteTask(userId: string, taskId: string) {
   const deletedTask = await deleteTaskRepository(userId, taskId);
 
-  if (!deletedTask) {
-    throw new Error("TASK_NOT_FOUND");
-  }
+  if (!deletedTask) throw new Error("TASK_NOT_FOUND");
+
+  return { message: "Task deleted successfully." };
+}
+
+export async function updateTaskStatus(
+  userId: string,
+  taskId: string,
+  input: UpdateTaskStatusInput,
+) {
+  const task = await updateTaskStatusRepository(
+    userId,
+    taskId,
+    input.status,
+  );
+
+  if (!task) throw new Error("TASK_NOT_FOUND");
 
   return {
-    message: "Task deleted successfully.",
+    message: "Task status updated successfully.",
+    data: task,
   };
 }
