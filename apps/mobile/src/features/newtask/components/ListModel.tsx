@@ -1,10 +1,9 @@
 import { listData } from "@/features/auth";
 import { COLORS, FONTS } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,45 +18,6 @@ interface ReminderModalProps {
   onSave: (listId: string) => void;
   listOfData:listData[]
 }
-
-export const REMINDER_OPTIONS = [
-  { label: "None", value: "none", description: "No reminder" },
-  {
-    label: "At time of task",
-    value: "at_time",
-    description: "When the task is due",
-  },
-  {
-    label: "5 minutes before",
-    value: "5_minutes",
-    description: "5 minutes before the due time",
-  },
-  {
-    label: "10 minutes before",
-    value: "10_minutes",
-    description: "10 minutes before the due time",
-  },
-  {
-    label: "15 minutes before",
-    value: "15_minutes",
-    description: "15 minutes before the due time",
-  },
-  {
-    label: "30 minutes before",
-    value: "30_minutes",
-    description: "30 minutes before the due time",
-  },
-  {
-    label: "1 hour before",
-    value: "1_hour",
-    description: "1 hour before the due time",
-  },
-  {
-    label: "1 day before",
-    value: "1_day",
-    description: "1 day before the due date",
-  },
-] as const;
 
 export default function ListModel({
   visible,
@@ -93,7 +53,7 @@ export default function ListModel({
                   activeOpacity={0.7}
                   onPress={() => {
                     setReminder(option.id);
-                    onSave(option.name);
+                    onSave(option.id);
                     onClose();
                   }}
                   style={[styles.option, isSelected && styles.selectedOption]}
@@ -139,14 +99,12 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     backgroundColor: "rgba(39, 35, 53, 0.45)",
   },
-
   modalContainer: {
     backgroundColor: COLORS.Background,
     padding: 20,
     maxHeight: "80%",
     borderRadius: 20,
   },
-
   handle: {
     width: 40,
     height: 4,
@@ -155,13 +113,11 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginBottom: 22,
   },
-
   header: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
   },
-
   headerIcon: {
     width: 46,
     height: 46,
@@ -171,24 +127,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 12,
   },
-
   headerContent: {
     flex: 1,
   },
-
   title: {
     fontFamily: FONTS.bold,
     fontSize: 20,
     color: COLORS.Ink,
   },
-
   subtitle: {
     fontFamily: FONTS.regular,
     fontSize: 12,
     color: COLORS.Muted,
     marginTop: 4,
   },
-
   closeButton: {
     width: 36,
     height: 36,
@@ -197,11 +149,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
   optionsList: {
     flexShrink: 1,
   },
-
   option: {
     flexDirection: "row",
     alignItems: "center",
@@ -213,12 +163,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginBottom: 10,
   },
-
   selectedOption: {
     borderColor: COLORS.Primary,
     backgroundColor: COLORS.PrimaryTint,
   },
-
   radio: {
     width: 20,
     height: 20,
@@ -229,45 +177,37 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 12,
   },
-
   selectedRadio: {
     borderColor: COLORS.Primary,
   },
-
   radioInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
     backgroundColor: COLORS.Primary,
   },
-
   optionContent: {
     flex: 1,
   },
-
   optionTitle: {
     fontFamily: FONTS.semiBold,
     fontSize: 14,
     color: COLORS.Ink,
   },
-
   selectedOptionTitle: {
     color: COLORS.Primary,
   },
-
   optionDescription: {
     fontFamily: FONTS.regular,
     fontSize: 11,
     color: COLORS.Muted,
     marginTop: 3,
   },
-
   actions: {
     flexDirection: "row",
     gap: 12,
     marginTop: 12,
   },
-
   cancelButton: {
     flex: 1,
     height: 48,
@@ -278,13 +218,11 @@ const styles = StyleSheet.create({
     borderColor: COLORS.Border,
     backgroundColor: COLORS.Surface,
   },
-
   cancelButtonText: {
     fontFamily: FONTS.semiBold,
     fontSize: 14,
     color: COLORS.Ink,
   },
-
   saveButton: {
     flex: 1.5,
     height: 48,
@@ -293,7 +231,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: COLORS.Primary,
   },
-
   saveButtonText: {
     fontFamily: FONTS.semiBold,
     fontSize: 14,

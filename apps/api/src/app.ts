@@ -5,6 +5,7 @@ import cors from "cors";
 import { pool } from "./config/database.js";
 import authRoutes from "./features/auth/auth.routes.js";
 import listRoutes from "./features/lists/list.routes.js";
+import taskRoutes from "./features/task/task.routes.js";
 
 const app = express();
 
@@ -63,5 +64,6 @@ app.get("/health", async (_req, res) => {
 // Authentication routes
 app.use("/api/auth", authRoutes);
 app.use("/api/lists", listRoutes);
+app.use("/api/tasks", taskRoutes);
 
 export default app;

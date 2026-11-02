@@ -13,6 +13,11 @@ export const API_ENDPOINTS = {
     listAll: '/lists',
     listById: '/lists/',
     createList: '/lists',
-    updateList: '/lists'
+  },
+  task: {
+    createupdateTask: '/tasks/create-update',
+    listAllTask: '/tasks/list',
+    singleTask: '/tasks/',
+    deleteTask: '/tasks/'
   }
 } as const;

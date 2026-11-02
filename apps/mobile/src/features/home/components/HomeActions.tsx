@@ -70,6 +70,8 @@ export default function HomeActions({
 const styles = StyleSheet.create({
   container: {
     gap: 12,
-    flexDirection:'row'
+    flexDirection:'row',
+    alignItems:"center",
+    justifyContent:"center"
   },
 });

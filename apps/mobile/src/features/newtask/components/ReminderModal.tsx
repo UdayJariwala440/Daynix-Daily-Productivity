@@ -51,13 +51,20 @@ export const REMINDER_OPTIONS = [
 ] as const;
 
 export type ReminderValue =
-  (typeof REMINDER_OPTIONS)[number]["value"];
+   | "none"
+  | "at_time"
+  | "5_minutes"
+  | "10_minutes"
+  | "15_minutes"
+  | "30_minutes"
+  | "1_hour"
+  | "1_day";
 
 interface ReminderModalProps {
   visible: boolean;
-  selectedReminder: string;
+  selectedReminder: ReminderValue;
   onClose: () => void;
-  onSave: (reminder: string) => void;
+  onSave: (reminder: ReminderValue) => void;
 }
 
 export default function ReminderModal({
@@ -67,7 +74,7 @@ export default function ReminderModal({
   onSave,
 }: ReminderModalProps) {
   const [reminder, setReminder] =
-    useState<string>(selectedReminder);
+    useState<ReminderValue>(selectedReminder);
 
   useEffect(() => {
     if (visible) {
@@ -134,13 +141,13 @@ const handleSave = () => {
             showsVerticalScrollIndicator={false}
           >
             {REMINDER_OPTIONS.map((option) => {
-              const isSelected = reminder === option.label;
+              const isSelected = reminder === option.value;
 
               return (
                 <TouchableOpacity
                   key={option.value}
                   activeOpacity={0.7}
-                  onPress={() => setReminder(option.label)}
+                  onPress={() => setReminder(option.value)}
                   style={[
                     styles.option,
                     isSelected && styles.selectedOption,

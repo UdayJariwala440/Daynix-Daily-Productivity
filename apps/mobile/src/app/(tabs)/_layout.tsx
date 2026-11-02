@@ -1,13 +1,14 @@
+import { IMAGES } from "@/constants";
 import { Tabs } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Image, StyleSheet } from "react-native";
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#007AFF",
-        tabBarInactiveTintColor: "#8E8E93",
+        tabBarActiveTintColor: "#6938EF",
+        tabBarInactiveTintColor: "#817B91",
         tabBarStyle: {
           height: 65,
           paddingBottom: 8,
@@ -19,8 +20,12 @@ export default function TabLayout() {
         name="home"
         options={{
           title: "Home",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} />
+          tabBarIcon: ({ color }) => (
+            <Image
+              source={IMAGES.home}
+              style={[styles.icon, { tintColor: color }]}
+              resizeMode="contain"
+            />
           ),
         }}
       />
@@ -29,29 +34,50 @@ export default function TabLayout() {
         name="task"
         options={{
           title: "Task",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="compass-outline" size={size} />
+          tabBarIcon: ({ color }) => (
+            <Image
+              source={IMAGES.calendar}
+              style={[styles.icon, { tintColor: color }]}
+              resizeMode="contain"
+            />
           ),
         }}
       />
+
       <Tabs.Screen
         name="list"
         options={{
           title: "List",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="compass-outline" size={size} />
+          tabBarIcon: ({ color }) => (
+            <Image
+              source={IMAGES.list}
+              style={[styles.icon, { tintColor: color }]}
+              resizeMode="contain"
+            />
           ),
         }}
       />
+
       <Tabs.Screen
         name="sessions"
         options={{
           title: "Explore",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="compass-outline" size={size} />
+          tabBarIcon: ({ color }) => (
+            <Image
+              source={IMAGES.bell}
+              style={[styles.icon, { tintColor: color }]}
+              resizeMode="contain"
+            />
           ),
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  icon: {
+    width: 24,
+    height: 24,
+  },
+});

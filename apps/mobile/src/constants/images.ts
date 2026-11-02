@@ -19,4 +19,8 @@ export const IMAGES = {
   close: require('../assets/images/ic_close.png'),
   chevron: require('../assets/images/ic_chevron_down.png'),
   flag: require('../assets/images/ic_flag.png'),
+  home: require('../assets/images/ic_home.png'),
+  list: require('../assets/images/ic_list.png'),
+  up_right: require('../assets/images/ic_corner_up_right.png'),
+  play: require('../assets/images/ic_play.png'),
 } as const;

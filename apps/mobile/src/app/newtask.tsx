@@ -1,6 +1,7 @@
 import { IMAGES } from "@/constants";
 import {
   AppButton,
+  createUpdateTask,
   getListAll,
   Header,
   Input,
@@ -13,30 +14,99 @@ import { TaskSelectField } from "@/features";
 import { COLORS, FONTS } from "@/theme";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-const listOfPriority = ["Low", "Medium", "High"];
+import {
+  REMINDER_OPTIONS,
+  ReminderValue,
+} from "@/features/newtask/components/ReminderModal";
+
+const listOfPriority = ["low", "medium", "high"];
+const taskStatus = ["pending", "in_progress", "paused"];
+const formatDate = (date: Date | null): string => {
+  if (!date) return "";
+  return date.toISOString().split("T")[0];
+};
+const formatTime = (time: Date): string => {
+  return new Date(time).toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+};
+const capitalizeFirstLetter = (text: string): string => {
+  if (!text) return "";
+  return text.charAt(0).toUpperCase() + text.slice(1);
+};
 
 export default function NewTaskScreen() {
-  const [list, setList] = useState<string>("");
+  const today = new Date();
+  const maxDate = new Date();
+  const [id, setId] = useState<string>("");
+  maxDate.setFullYear(maxDate.getFullYear() + 1);
+  const [lists, setLists] = useState<listData[]>([]);
   const [time, setTime] = useState<Date>(new Date());
-  const [priority, setPriority] = useState<string>("");
   const [taskName, setTaskName] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [selectList, setSelectList] = useState<string>("");
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [description, setDescription] = useState<string>("");
-  const [reminder, setReminder] = useState<string>("30_minutes");
+  const [priority, setPriority] = useState<string>("medium");
+  const [reminder, setReminder] = useState<ReminderValue>("none");
+  const [isListModalVisible, setIsListModalVisible] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState<boolean>(false);
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [isReminderModalVisible, setIsReminderModalVisible] = useState(false);
-  const [isListModalVisible, setIsListModalVisible] = useState(false);
-  const [lists, setLists] = useState<listData[]>([]);
-  const today = new Date();
-  const maxDate = new Date();
-  maxDate.setFullYear(maxDate.getFullYear() + 1);
 
+  const getListName = (listId: string) => {
+    return (
+      lists.find((item) => String(item.id) === String(listId))?.name ??
+      "Select list"
+    );
+  };
+  const getReminderName = (reminder: ReminderValue): string => {
+    return (
+      REMINDER_OPTIONS.find((option) => option.value === reminder)?.label ??
+      "Select reminder"
+    );
+  };
 
+  const dataSendToApi = async () => {
+    if (loading) return;
 
+    const payload = {
+      name: taskName,
+      description,
+      list_id: selectList,
+      start_date: formatDate(dueDate),
+      start_time: formatTime(time),
+      priority,
+      reminder,
+      status: "pending",
+      ...(id ? { id } : {}),
+    };
 
+    try {
+      setLoading(true);
+
+      const response = await createUpdateTask(payload);
+
+      if (response.success) {
+        Alert.alert("", response.message, [
+          {
+            text: "OK",
+            onPress: () => router.back(),
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error("Failed to create task:", error);
+
+      Alert.alert("Error", "Unable to create the task. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
     fetchlist();
   }, []);
@@ -49,11 +119,8 @@ export default function NewTaskScreen() {
       }
     } catch (error) {
       console.log("Error ===>", JSON.stringify(error));
-    } finally {
-     
     }
   };
-
 
   return (
     <ScreenContainer>
@@ -99,25 +166,14 @@ export default function NewTaskScreen() {
       <View style={styles.sectionSpacing} />
       <View style={styles.row}>
         <TaskSelectField
-          label="List *"
-          value={list}
-          onPress={() => {
-            setIsListModalVisible(true);
-          }}
-          containerStyle={{ flex: 1 }}
-        />
-      </View>
-       <View style={styles.sectionSpacing} />
-      <View style={styles.row}>
-        <TaskSelectField
-          label="Due date *"
+          label="Start date *"
           value={
             dueDate
               ? dueDate.toLocaleDateString("en-GB", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })
               : "Select date"
           }
           icon={IMAGES.calendar}
@@ -128,7 +184,7 @@ export default function NewTaskScreen() {
         />
         <View style={{ width: 8 }} />
         <TaskSelectField
-          label="Due time"
+          label="Start time"
           value={time.toLocaleTimeString("en-US", {
             hour: "2-digit",
             minute: "2-digit",
@@ -143,6 +199,28 @@ export default function NewTaskScreen() {
         />
       </View>
       <View style={styles.sectionSpacing} />
+      <View style={styles.row}>
+        <TaskSelectField
+          label="Reminder"
+          value={getReminderName(reminder)}
+          icon={IMAGES.bell}
+          iconTintColor={COLORS.Primary}
+          onPress={() => setIsReminderModalVisible(true)}
+          containerStyle={{ flex: 1 }}
+        />
+      </View>
+      <View style={styles.sectionSpacing} />
+      <View style={styles.row}>
+        <TaskSelectField
+          label="List *"
+          value={getListName(selectList)}
+          onPress={() => {
+            setIsListModalVisible(true);
+          }}
+          containerStyle={{ flex: 1 }}
+        />
+      </View>
+      <View style={styles.sectionSpacing} />
       <View style={[styles.row, { flexDirection: "column" }]}>
         <Text style={styles.priorityLabel}>{"Priority"}</Text>
         <View style={{ flexDirection: "row" }}>
@@ -154,7 +232,7 @@ export default function NewTaskScreen() {
                 key={item}
                 containerStyle={styles.flexField}
                 label=""
-                value={item}
+                value={capitalizeFirstLetter(item)}
                 icon={IMAGES.flag}
                 height={42}
                 borderRadius={10}
@@ -181,19 +259,16 @@ export default function NewTaskScreen() {
           })}
         </View>
       </View>
-      <View style={styles.sectionSpacing} />
-      <View style={styles.row}>
-        <TaskSelectField
-          label="Reminder"
-          value={reminder}
-          icon={IMAGES.bell}
-          iconTintColor={COLORS.Primary}
-          onPress={() => setIsReminderModalVisible(true)}
-          containerStyle={{ flex: 1 }}
-        />
-      </View>
-      <View style={styles.sectionSpacing} />
-      <AppButton title="Add task" showIcon={false} />
+      <View style={[styles.sectionSpacing, { flex: 1 }]} />
+      <AppButton
+        title="Add task"
+        showIcon={false}
+        onPress={() => {
+          dataSendToApi();
+        }}
+        loading={loading}
+        disabled={loading}
+      />
       <ReminderModal
         visible={isReminderModalVisible}
         selectedReminder={reminder}
@@ -204,10 +279,10 @@ export default function NewTaskScreen() {
       />
       <ListModel
         visible={isListModalVisible}
-        selectList={list}
+        selectList={selectList}
         onClose={() => setIsListModalVisible(false)}
         onSave={(item) => {
-          setList(item);
+          setSelectList(item);
         }}
         listOfData={lists}
       />
@@ -218,10 +293,8 @@ export default function NewTaskScreen() {
           display="default"
           onChange={(event, selectedTime) => {
             setShowTimePicker(false);
-
             if (event.type === "set" && selectedTime) {
               setTime(selectedTime);
-              console.log("Selected time:", selectedTime);
             }
           }}
         />
@@ -241,6 +314,11 @@ export default function NewTaskScreen() {
             }
           }}
         />
+      )}
+      {loading && (
+        <View style={styles.loaderOverlay}>
+          <ActivityIndicator size="large" color={COLORS.Primary} />
+        </View>
       )}
     </ScreenContainer>
   );
@@ -271,7 +349,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.Border,
   },
   sectionSpacing: {
-    height: 22,
+    height: 12,
   },
   row: {
     flexDirection: "row",
@@ -288,5 +366,12 @@ const styles = StyleSheet.create({
   },
   priorityValue: {
     fontFamily: FONTS.semiBold,
+  },
+  loaderOverlay: {
+    ...StyleSheet.absoluteFill,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
+    zIndex: 999,
   },
 });
