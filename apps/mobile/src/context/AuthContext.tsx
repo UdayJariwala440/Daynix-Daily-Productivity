@@ -2,6 +2,7 @@ import {
   clearAuthTokens,
   getAccessToken,
   saveAuthTokens,
+  subscribeToAuthTokenState,
 } from "@/features/auth/services/authStorage";
 import {
   createContext,
@@ -27,6 +28,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     let active = true;
+    const unsubscribe = subscribeToAuthTokenState((nextStatus) => {
+      if (active) {
+        setStatus(nextStatus);
+      }
+    });
 
     async function restoreSession() {
       try {
@@ -48,6 +54,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     return () => {
       active = false;
+      unsubscribe();
     };
   }, []);
 

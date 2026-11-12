@@ -4,6 +4,23 @@ import { Platform } from "react-native";
 const ACCESS_TOKEN_KEY = "daynix.accessToken";
 const REFRESH_TOKEN_KEY = "daynix.refreshToken";
 
+type AuthTokenState = "authenticated" | "unauthenticated";
+type AuthTokenStateListener = (state: AuthTokenState) => void;
+
+const authTokenStateListeners = new Set<AuthTokenStateListener>();
+
+function notifyAuthTokenState(state: AuthTokenState) {
+  authTokenStateListeners.forEach((listener) => listener(state));
+}
+
+export function subscribeToAuthTokenState(listener: AuthTokenStateListener) {
+  authTokenStateListeners.add(listener);
+
+  return () => {
+    authTokenStateListeners.delete(listener);
+  };
+}
+
 async function setValue(key: string, value: string) {
   if (Platform.OS === "web") {
     globalThis.localStorage?.setItem(key, value);
@@ -38,6 +55,7 @@ export async function saveAuthTokens(
     setValue(ACCESS_TOKEN_KEY, accessToken),
     setValue(REFRESH_TOKEN_KEY, refreshToken),
   ]);
+  notifyAuthTokenState("authenticated");
 }
 
 export function getAccessToken() {
@@ -49,8 +67,12 @@ export function getRefreshToken() {
 }
 
 export async function clearAuthTokens() {
-  await Promise.all([
-    removeValue(ACCESS_TOKEN_KEY),
-    removeValue(REFRESH_TOKEN_KEY),
-  ]);
+  try {
+    await Promise.all([
+      removeValue(ACCESS_TOKEN_KEY),
+      removeValue(REFRESH_TOKEN_KEY),
+    ]);
+  } finally {
+    notifyAuthTokenState("unauthenticated");
+  }
 }

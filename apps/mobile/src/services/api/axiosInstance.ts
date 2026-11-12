@@ -1,4 +1,4 @@
-import { create } from "axios";
+import { create, isAxiosError } from "axios";
 import {
   clearAuthTokens,
   getAccessToken,
@@ -29,7 +29,59 @@ const refreshClient = create({
   headers: { "Content-Type": "application/json" },
 });
 
+const PUBLIC_AUTH_ENDPOINTS = new Set([
+  "/auth/login",
+  "/auth/signup",
+  "/auth/resend-otp",
+  "/auth/verify-otp",
+  "/auth/refresh",
+]);
+
+type RefreshResponse = {
+  accessToken: string;
+  refreshToken: string;
+};
+
+export class SessionExpiredError extends Error {
+  constructor() {
+    super("Your session has expired. Please sign in again.");
+    this.name = "SessionExpiredError";
+  }
+}
+
+export function isSessionExpiredError(error: unknown) {
+  return error instanceof SessionExpiredError;
+}
+
+let refreshPromise: Promise<string> | null = null;
+
+async function refreshSession(refreshToken: string) {
+  const response = await refreshClient.post<RefreshResponse>(
+    "/auth/refresh",
+    { refreshToken },
+  );
+
+  await saveAuthTokens(
+    response.data.accessToken,
+    response.data.refreshToken,
+  );
+
+  return response.data.accessToken;
+}
+
+async function clearRejectedSession(rejectedRefreshToken: string) {
+  // Do not erase a newer session if the user signed in while this request
+  // was in flight.
+  if ((await getRefreshToken()) === rejectedRefreshToken) {
+    await clearAuthTokens();
+  }
+}
+
 axiosInstance.interceptors.request.use(async (config) => {
+  if (config.url && PUBLIC_AUTH_ENDPOINTS.has(config.url)) {
+    return config;
+  }
+
   const accessToken = await getAccessToken();
 
   if (accessToken) {
@@ -49,28 +101,39 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    if (request.url && PUBLIC_AUTH_ENDPOINTS.has(request.url)) {
+      return Promise.reject(error);
+    }
+
     request._retried = true;
     const refreshToken = await getRefreshToken();
 
     if (!refreshToken) {
-      return Promise.reject(error);
+      await clearAuthTokens();
+      return Promise.reject(new SessionExpiredError());
     }
 
     try {
-      const response = await refreshClient.post<{
-        accessToken: string;
-        refreshToken: string;
-      }>("/auth/refresh", { refreshToken });
+      if (!refreshPromise) {
+        refreshPromise = refreshSession(refreshToken).finally(() => {
+          refreshPromise = null;
+        });
+      }
 
-      await saveAuthTokens(
-        response.data.accessToken,
-        response.data.refreshToken,
-      );
-      request.headers.Authorization = `Bearer ${response.data.accessToken}`;
+      const accessToken = await refreshPromise;
+      request.headers.Authorization = `Bearer ${accessToken}`;
 
       return axiosInstance(request);
     } catch (refreshError) {
-      await clearAuthTokens();
+      if (
+        isAxiosError(refreshError) &&
+        (refreshError.response?.status === 400 ||
+          refreshError.response?.status === 401)
+      ) {
+        await clearRejectedSession(refreshToken);
+        return Promise.reject(new SessionExpiredError());
+      }
+
       return Promise.reject(refreshError);
     }
   },
